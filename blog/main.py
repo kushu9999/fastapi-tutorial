@@ -12,3 +12,4 @@ class Blog(BaseModel):
 @app.post("/")
 def create(request:Blog):
     return request
+    
