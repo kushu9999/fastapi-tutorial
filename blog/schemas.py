@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class BlogSchema(BaseModel):
@@ -11,3 +11,9 @@ class BlogShow(BaseModel):
 
     class Config():
         orm_mode = True
+
+class UserSchema(BaseModel):
+    name:str 
+    email:EmailStr
+    password:str
+

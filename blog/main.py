@@ -1,10 +1,12 @@
+from os import name
 from typing import List
 from fastapi import Depends, FastAPI, status, Response, HTTPException
-from .schemas import BlogSchema, BlogShow
+from .schemas import BlogSchema, BlogShow, UserSchema
 from .import models
-from .models import Blog
+from .models import Blog, User
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
+from passlib.context import CryptContext
 
 app=FastAPI()
 
@@ -64,3 +66,24 @@ def update_blog(id:int, request:BlogSchema, db:Session = Depends(get_db)):
     return {'response': f"Blog with id {id} updated sucessfully"}
 
 
+
+pwd_cxt = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+@app.post("/user", status_code=status.HTTP_201_CREATED, tags=["User CRUD"])
+def create_new_user(request: UserSchema, db:Session = Depends(get_db)):
+    hashed_password = pwd_cxt.hash(request.password)
+    new_user = User(name=request.name, email=request.email, password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.delete("/user/{id}", status_code=status.HTTP_204_NO_CONTENT, tags=["User CRUD"])
+def delete_user(id:int,db:Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail = f"User with id {id} is not available")
+    user.delete(synchronize_session=False)
+    db.commit()
+    return {'response': f"User with id {id} deleted sucessfully"}
