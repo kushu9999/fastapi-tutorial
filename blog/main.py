@@ -66,7 +66,7 @@ def update_blog(id:int, request:BlogSchema, db:Session = Depends(get_db)):
     return {'response': f"Blog with id {id} updated sucessfully"}
 
 
-@app.post("/user", response_model=UserShow,  status_code=status.HTTP_201_CREATED, tags=["User CRUD"])
+@app.post("/user", status_code=status.HTTP_201_CREATED, tags=["User CRUD"])
 def create_new_user(request: UserSchema, db:Session = Depends(get_db)):
     new_user = User(name=request.name, email=request.email, password=Hash.bcrypt(request.password))
     db.add(new_user)
@@ -82,6 +82,15 @@ def get_user_by_id(id:int, db:Session = Depends(get_db)):
                             detail = f"User with id {id} is not available")
     return user
     
+@app.put("/user/{id}", status_code=status.HTTP_202_ACCEPTED, tags=["User CRUD"])
+def update_blog(id:int, request:UserSchema, db:Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail = f"User with id {id} is not available")
+    user.update(request.dict())
+    db.commit()
+    return {'response': f"User with id {id} updated sucessfully"}
 
 @app.delete("/user/{id}", status_code=status.HTTP_204_NO_CONTENT, tags=["User CRUD"])
 def delete_user(id:int,db:Session = Depends(get_db)):
